@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -14,6 +13,7 @@ from registration.views import RegistrationView as BaseRegistrationView
 
 from .models import InvitationError, Invitation
 from .forms import InvitationForm
+from .backend import InvitationBackend
 
 
 class RegistrationView(BaseRegistrationView):
@@ -43,11 +43,11 @@ class RegistrationView(BaseRegistrationView):
 
     def register(self, request, **cleaned_data):
         """Allow a new user to register via invitation."""
-        username, email, password = cleaned_data['username'], \
-                                    cleaned_data['email'], \
-                                    cleaned_data['password1']
-        User.objects.create_user(username, email, password)
-        self.user = authenticate(username=username, password=password)
+        backend = InvitationBackend()
+        email, password = cleaned_data['email'], \
+                          cleaned_data['password1']
+        new_user = backend.register(request, email=email, password=password)
+        self.user = authenticate(email=new_user.username, password=password)
         login(request, self.user)
         user_registered.send(sender=self.__class__, user=self.user,
                              request=request)
