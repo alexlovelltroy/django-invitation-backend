@@ -45,7 +45,12 @@ _DUPLICATE_USERNAME_ERRORS = (
 )
 
 
-def create_user(email, password=None, is_staff=None, is_active=None):
+def create_user(email,
+                password=None,
+                is_staff=None,
+                is_active=None,
+                first_name=None,
+                last_name=None):
     """
     Create a new user with the given email.
     Use this instead of `User.objects.create_user`.
@@ -58,10 +63,14 @@ def create_user(email, password=None, is_staff=None, is_active=None):
             raise IntegrityError('user email is not unique')
         raise
 
-    if is_active is not None or is_staff is not None:
-        if is_active is not None:
-            user.is_active = is_active
-        if is_staff is not None:
-            user.is_staff = is_staff
-        user.save()
+    if first_name:
+        user.first_name = first_name
+    if last_name:
+        user.last_name = last_name
+    if is_active:
+        user.is_active = is_active
+    if is_staff:
+        user.is_staff = is_staff
+
+    user.save()
     return user

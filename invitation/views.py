@@ -12,12 +12,14 @@ from registration.signals import user_registered
 from registration.views import RegistrationView as BaseRegistrationView
 
 from .models import InvitationError, Invitation
-from .forms import InvitationForm
+from .forms import InvitationForm, UserRegistrationForm
 from .backend import InvitationBackend
 
 
 class RegistrationView(BaseRegistrationView):
     """Registration via invitation key."""
+    form_class = UserRegistrationForm
+    success_url = "/dashboard"
 
     def get_context_data(self, **kwargs):
         """Adds the current invitation to the context."""
@@ -28,9 +30,6 @@ class RegistrationView(BaseRegistrationView):
     def get_initial(self):
         """Sets the invitation's email as the initial value for the form."""
         return {'email': self.invitation.email}
-
-    def get_success_url(self, request, user):
-        return (user.get_absolute_url(), (), {})
 
     def registration_allowed(self, request):
         """Search for a valid invitation key."""
@@ -46,7 +45,10 @@ class RegistrationView(BaseRegistrationView):
         backend = InvitationBackend()
         email, password = cleaned_data['email'], \
                           cleaned_data['password1']
-        new_user = backend.register(request, email=email, password=password)
+        first_name = cleaned_data['first_name'] or None
+        last_name = cleaned_data['last_name'] or None
+        print "calling register with %s" % cleaned_data
+        new_user = backend.register(request, email=email, password=password, first_name=first_name, last_name=last_name)
         self.user = authenticate(email=new_user.username, password=password)
         login(request, self.user)
         user_registered.send(sender=self.__class__, user=self.user,
@@ -74,7 +76,7 @@ class InvitationView(FormView):
             )
         except InvitationError:
             return redirect(self.get_invitation_error_url())
-        self.invitation.send_email()
+        #self.invitation.send_email()
         return redirect(self.get_success_url())
 
     def get_invitation_error_url(self):

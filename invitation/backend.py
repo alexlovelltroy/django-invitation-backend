@@ -1,15 +1,20 @@
 from registration import signals
-from registration.backends import default
 from django.contrib.auth.models import User
 from django.contrib.auth.backends import ModelBackend
 
 from .util import get_user, create_user
 
 
-class InvitationBackend(default.DefaultBackend):
+class InvitationBackend(object):
     def register(self, request, **kwargs):
         email, password = kwargs['email'], kwargs['password']
-        new_user = create_user(email, password, is_active=True)
+        last_name = kwargs.get('last_name', None)
+        first_name = kwargs.get('first_name', None)
+        new_user = create_user(email, password,
+                               is_active=True,
+                               first_name=first_name,
+                               last_name=last_name,
+                               )
         signals.user_registered.send(sender=self.__class__,
                                      user=new_user,
                                      request=request)

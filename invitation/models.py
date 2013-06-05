@@ -10,7 +10,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-from .utils import _email_to_username
+from .util import _email_to_username
 
 import app_settings
 import signals
@@ -42,6 +42,7 @@ class InvitationManager(models.Manager):
                                     user.email, email)
             key = hashlib.sha1(key).hexdigest()
             invitation = self.create(user=user, email=email, key=key)
+            signals.invitation_added.send(sender=self, invitation=invitation)
         return invitation
     invite.alters_data = True
 

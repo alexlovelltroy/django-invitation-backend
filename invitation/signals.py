@@ -1,7 +1,7 @@
 from django.dispatch import Signal
 
 
-invitation_added = Signal(providing_args=['user', 'count'])
+invitation_added = Signal(providing_args=['invitation'])
 
 invitation_sent = Signal()
 
