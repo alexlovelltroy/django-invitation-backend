@@ -21,27 +21,46 @@ class InvitationError(Exception):
 
 
 class InvitationManager(models.Manager):
-    def invite(self, user, email):
+    def invite(self, user, email=None, first_name=None, last_name=None):
         """Get or create an invitation for ``email`` from ``user``.
 
         This method doesn't an send email. You need to call ``send_email()``
         method on returned ``Invitation`` instance.
         """
         invitation = None
-        try:
-            # It is possible that there is more than one invitation fitting
-            # the criteria. Normally this means some older invitations are
-            # expired or an email is invited consequtively.
-            invitation = self.filter(user=user, email=email)[0]
-            if not invitation.is_valid():
-                invitation = None
-        except (Invitation.DoesNotExist, IndexError):
-            pass
+        if email:
+            oursecret = "%s%s" % (user.email, email)
+            try:
+                # It is possible that there is more than one invitation fitting
+                # the criteria. Normally this means some older invitations are
+                # expired or an email is invited consequtively.
+                invitation = self.filter(user=user, email=email)[0]
+                if not invitation.is_valid():
+                    invitation = None
+            except (Invitation.DoesNotExist, IndexError):
+                pass
+        elif first_name and last_name:
+            oursecret = "%s%s%s" % (user.email, first_name, last_name)
+            try:
+                # It is possible that there is more than one invitation fitting
+                # the criteria. Normally this means some older invitations are
+                # expired or an email is invited consequtively.
+                invitation = self.filter(user=user, first_name=first_name, last_name=last_name)[0]
+                if not invitation.is_valid():
+                    invitation = None
+            except (Invitation.DoesNotExist, IndexError):
+                pass
         if invitation is None:
-            key = '%s%0.16f%s%s' % (settings.SECRET_KEY, random.random(),
-                                    user.email, email)
-            key = hashlib.sha1(key).hexdigest()
-            invitation = self.create(user=user, email=email, key=key)
+            prekey = '%s%0.16f%s' % (settings.SECRET_KEY, random.random(),
+                                    oursecret)
+            key = hashlib.sha1(prekey).hexdigest()
+            if not email:
+                email = ""
+            if not first_name:
+                first_name = ""
+            if not last_name:
+                last_name = ""
+            invitation = self.create(user=user, email=email, first_name=first_name, last_name=last_name,  key=key)
             signals.invitation_added.send(sender=self, invitation=invitation)
         return invitation
     invite.alters_data = True
@@ -88,8 +107,10 @@ class InvitationManager(models.Manager):
 
 
 class Invitation(models.Model):
-    user = models.ForeignKey(User, related_name='invitations')
-    email = models.EmailField(_(u'e-mail'))
+    user = models.ForeignKey(User, related_name='invitations', verbose_name="Existing User")
+    first_name = models.CharField(u'first name', max_length=30, blank=True, null=True)
+    last_name = models.CharField(u'last name', max_length=30, blank=True, null=True)
+    email = models.EmailField(u'e-mail', blank=True, null=True)
     key = models.CharField(_(u'invitation key'), max_length=40, unique=True)
     date_invited = models.DateTimeField(_(u'date invited'), default=now())
 

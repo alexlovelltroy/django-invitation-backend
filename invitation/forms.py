@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from registration.forms import RegistrationFormTermsOfService
+from registration.forms import RegistrationForm #RegistrationFormTermsOfService
 from email_integration.models import EmailAddress
 
 
@@ -14,7 +14,7 @@ def clean_email(self):
         """
         if User.objects.filter(email__iexact=self.cleaned_data['email']):
             raise forms.ValidationError("This email address is already in use. Please supply a different email address.")
-        if EmailAddress.objects.filter(email_address__iexact=self.cleaned_data['email']):
+        if EmailAddress.objects.claimed().filter(email_address__iexact=self.cleaned_data['email']):
             raise forms.ValidationError("This email address is already in use. Please supply a different email address.")
         return self.cleaned_data['email']
 
@@ -29,13 +29,19 @@ class Email(forms.EmailField):
             return value
 
 
-class UserRegistrationForm(RegistrationFormTermsOfService):
+class UserRegistrationForm(RegistrationForm):
     #email will be become username
     email = Email()
     first_name = forms.CharField(label="First Name")
     last_name = forms.CharField(label="Last Name")
+    error_css_class = 'error'
+    required_css_class = 'required'
+
+
 
     def __init__(self, *args, **kwargs):
         super (UserRegistrationForm, self).__init__(*args,**kwargs)
         self.fields.pop('username')
-        self.fields.keyOrder = ['first_name', 'last_name', 'email', 'password1', 'password2', 'tos']
+        self.fields.keyOrder = ['first_name', 'last_name', 'email', 'password1', 'password2' ]
+        #TODO: override fields['password confirmation'].verbose_name to "Confirm Password"
+

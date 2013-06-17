@@ -3,10 +3,12 @@ from __future__ import absolute_import
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_text
 from django.views.generic.edit import FormView
+
 
 from registration.signals import user_registered
 from registration.views import RegistrationView as BaseRegistrationView
@@ -19,7 +21,7 @@ from .backend import InvitationBackend
 class RegistrationView(BaseRegistrationView):
     """Registration via invitation key."""
     form_class = UserRegistrationForm
-    success_url = "/dashboard"
+    success_url = reverse_lazy('invitation_welcome')
 
     def get_context_data(self, **kwargs):
         """Adds the current invitation to the context."""
