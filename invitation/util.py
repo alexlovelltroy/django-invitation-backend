@@ -24,7 +24,10 @@ def get_user(email, queryset=None):
     """
     if queryset is None:
         queryset = User.objects
-    return queryset.get(username=_email_to_username(email))
+    try:
+        return queryset.get(username=_email_to_username(email))
+    except User.DoesNotExist:
+        return queryset.get(email=email)
 
 
 def user_exists(email, queryset=None):

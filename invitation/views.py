@@ -16,6 +16,7 @@ from registration.views import RegistrationView as BaseRegistrationView
 from .models import InvitationError, Invitation
 from .forms import InvitationForm, UserRegistrationForm
 from .backend import InvitationBackend
+from . import signals
 
 
 class RegistrationView(BaseRegistrationView):
@@ -78,6 +79,8 @@ class InvitationView(FormView):
             )
         except InvitationError:
             return redirect(self.get_invitation_error_url())
+
+        signals.send_custom_email.send(sender=self, invitation=self.invitation)
         #self.invitation.send_email()
         return redirect(self.get_success_url())
 

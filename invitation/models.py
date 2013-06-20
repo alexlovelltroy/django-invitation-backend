@@ -193,7 +193,7 @@ class Invitation(models.Model):
             'expiration_days': app_settings.EXPIRE_DAYS,
             'site': site
         })
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        send_mail(subject, message, "%s via Intros.to <%s>" % (self.user.get_full_name(), settings.DEFAULT_FROM_EMAIL), [email])
         signals.invitation_sent.send(sender=self)
 
     def mark_accepted(self, new_user):
